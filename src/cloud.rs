@@ -179,7 +179,7 @@ impl CloudClient {
         .await
         .into_iter()
         .collect::<Result<Vec<_>>>()?;
-        items.sort_by(|left, right| left.name.to_lowercase().cmp(&right.name.to_lowercase()));
+        items.sort_by_key(|item| item.name.to_lowercase());
         let library = Library::new(items);
         *self.inner.library.write().await = Some(library.clone());
         Ok(library)
@@ -722,7 +722,7 @@ fn parse_index(bytes: &[u8]) -> Result<Vec<BlobEntry>> {
 
 fn serialize_document_index(entries: &[BlobEntry]) -> Vec<u8> {
     let mut sorted = entries.to_vec();
-    sorted.sort_by(|left, right| left.id.cmp(&right.id));
+    sorted.sort_by_key(|entry| entry.id.clone());
     let mut output = String::from("3\n");
     for entry in sorted {
         output.push_str(&format!("{}:0:{}:0:{}\n", entry.hash, entry.id, entry.size));
@@ -732,7 +732,7 @@ fn serialize_document_index(entries: &[BlobEntry]) -> Vec<u8> {
 
 fn serialize_root_index(entries: &[BlobEntry]) -> Vec<u8> {
     let mut sorted = entries.to_vec();
-    sorted.sort_by(|left, right| left.id.cmp(&right.id));
+    sorted.sort_by_key(|entry| entry.id.clone());
     let total = sorted.iter().map(|entry| entry.size).sum::<u64>();
     let mut output = format!("4\n0:.:{}:{}\n", sorted.len(), total);
     for entry in sorted {
@@ -746,7 +746,7 @@ fn serialize_root_index(entries: &[BlobEntry]) -> Vec<u8> {
 
 fn hash_entries(entries: &[BlobEntry]) -> Result<String> {
     let mut sorted = entries.to_vec();
-    sorted.sort_by(|left, right| left.id.cmp(&right.id));
+    sorted.sort_by_key(|entry| entry.id.clone());
     let mut hasher = Sha256::new();
     for entry in sorted {
         hasher.update(hex_decode(&entry.hash)?);
