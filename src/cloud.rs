@@ -651,6 +651,7 @@ impl CloudClient {
             .http
             .post(USER_TOKEN_URL)
             .bearer_auth(&tokens.devicetoken)
+            .header(reqwest::header::CONTENT_LENGTH, "0")
             .send()
             .await?;
         if !response.status().is_success() {
