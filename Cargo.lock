@@ -2451,7 +2451,7 @@ dependencies = [
  "lopdf",
  "open",
  "pdf-render",
- "remarkable_lines",
+ "remarkable-render",
  "reqwest",
  "rmcp",
  "schemars",
@@ -2463,6 +2463,15 @@ dependencies = [
  "tokio",
  "tracing-subscriber",
  "uuid",
+]
+
+[[package]]
+name = "remarkable-render"
+version = "0.1.1"
+dependencies = [
+ "remarkable_lines",
+ "thiserror",
+ "tiny-skia",
 ]
 
 [[package]]

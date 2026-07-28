@@ -7,6 +7,10 @@ description = "A focused, cloud-only MCP server for reMarkable"
 license = "MIT"
 repository = "https://github.com/Bradley-Butcher/remarkable-mcp"
 
+[workspace]
+members = [".", "crates/remarkable-render"]
+resolver = "2"
+
 [dependencies]
 base64 = "0.22"
 chrono = { version = "0.4", features = ["serde"] }
@@ -17,7 +21,7 @@ image = { version = "0.25", default-features = false, features = ["jpeg", "png"]
 lopdf = "0.38"
 open = "5"
 pdf-render = "1.0.0-beta.17"
-remarkable_lines = "0.1.3"
+remarkable-render = { path = "crates/remarkable-render" }
 reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "stream"] }
 rmcp = { version = "2.2", features = ["server", "macros", "schemars", "transport-io"] }
 schemars = { version = "1.2", features = ["chrono04"] }

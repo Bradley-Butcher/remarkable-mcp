@@ -1,0 +1,13 @@
+[package]
+name = "remarkable-render"
+version = "0.1.1"
+edition = "2024"
+rust-version = "1.88"
+description = "Variable-width ink renderer for reMarkable scene files"
+license = "MIT"
+repository = "https://github.com/Bradley-Butcher/remarkable-mcp"
+
+[dependencies]
+remarkable_lines = "0.1.3"
+thiserror = "2"
+tiny-skia = "0.12"

@@ -2,13 +2,9 @@ use std::sync::Arc;
 
 use image::{DynamicImage, GenericImageView, ImageBuffer, Rgba, imageops::FilterType};
 use pdf_render::{RenderSettings, pdf_interpret::InterpreterSettings, pdf_syntax::Pdf};
-use remarkable_lines::{
-    RemarkableFile,
-    shared::{pen_color::PenColor, tool::Tool},
-    v6::block::Block,
-};
+use remarkable_render::render_ink;
 use serde_json::Value;
-use tiny_skia::{Color, LineCap, LineJoin, Paint, PathBuilder, Pixmap, Stroke, Transform};
+use tiny_skia::{Color, Pixmap};
 
 use crate::{
     cloud::CloudClient,
@@ -189,10 +185,10 @@ fn render_page(
         ItemKind::Folder => return Err(Error::InvalidInput("a folder cannot be read".into())),
     };
     if let Some(bytes) = rm_bytes
-        && let Err(error) = draw_strokes(&mut canvas, &bytes)
+        && let Err(error) = render_ink(&mut canvas, &bytes)
         && kind != ItemKind::Pdf
     {
-        return Err(error);
+        return Err(Error::Render(error.to_string()));
     }
     let image = DynamicImage::ImageRgba8(
         ImageBuffer::<Rgba<u8>, _>::from_raw(canvas.width(), canvas.height(), canvas.take())
@@ -237,105 +233,6 @@ fn blank_page(max_edge: u32) -> Result<Pixmap> {
         .ok_or_else(|| Error::Render("could not allocate page".into()))?;
     pixmap.fill(Color::from_rgba8(251, 251, 249, 255));
     Ok(pixmap)
-}
-
-fn draw_strokes(canvas: &mut Pixmap, bytes: &[u8]) -> Result<()> {
-    let file = RemarkableFile::read(bytes)
-        .map_err(|error| Error::Render(format!("could not parse ink layer: {error}")))?;
-    match file {
-        RemarkableFile::V6 { blocks, .. } => {
-            for block in blocks {
-                if let Block::SceneLineItem(block) = block
-                    && block.item.deleted_length == 0
-                    && let Some(line) = block.item.value
-                {
-                    let width = line.points.iter().map(|point| point.width).sum::<f32>()
-                        / line.points.len().max(1) as f32;
-                    stroke_line(
-                        canvas,
-                        line.points.iter().map(|point| (point.x, point.y)),
-                        width * line.thickness_scale as f32,
-                        &line.color,
-                        &line.tool,
-                    );
-                }
-            }
-        }
-        RemarkableFile::Other { pages, .. } => {
-            for page in pages {
-                for layer in page.layers {
-                    for line in layer.lines {
-                        stroke_line(
-                            canvas,
-                            line.points.iter().map(|point| (point.x, point.y)),
-                            line.brush_size,
-                            &line.color,
-                            &line.tool,
-                        );
-                    }
-                }
-            }
-        }
-    }
-    Ok(())
-}
-
-fn stroke_line(
-    canvas: &mut Pixmap,
-    points: impl Iterator<Item = (f32, f32)>,
-    source_width: f32,
-    color: &PenColor,
-    tool: &Tool,
-) {
-    let mut points = points.peekable();
-    let Some((x, y)) = points.next() else { return };
-    let mut path = PathBuilder::new();
-    path.move_to(map_x(x, canvas.width()), map_y(y, canvas.height()));
-    for (x, y) in points {
-        path.line_to(map_x(x, canvas.width()), map_y(y, canvas.height()));
-    }
-    let Some(path) = path.finish() else { return };
-    let mut paint = Paint::default();
-    let (red, green, blue, alpha) = ink_color(color, tool);
-    paint.set_color_rgba8(red, green, blue, alpha);
-    paint.anti_alias = true;
-    let scale = canvas.height() as f32 / PAPER_HEIGHT;
-    let stroke = Stroke {
-        width: (source_width * scale).clamp(1.0, 48.0),
-        line_cap: LineCap::Round,
-        line_join: LineJoin::Round,
-        ..Default::default()
-    };
-    canvas.stroke_path(&path, &paint, &stroke, Transform::identity(), None);
-}
-
-fn map_x(x: f32, width: u32) -> f32 {
-    ((x + PAPER_WIDTH / 2.0) / PAPER_WIDTH) * width as f32
-}
-
-fn map_y(y: f32, height: u32) -> f32 {
-    (y / PAPER_HEIGHT) * height as f32
-}
-
-fn ink_color(color: &PenColor, tool: &Tool) -> (u8, u8, u8, u8) {
-    if matches!(tool, Tool::Eraser | Tool::EraseArea | Tool::EraseAll) {
-        return (251, 251, 249, 255);
-    }
-    let alpha = if matches!(tool, Tool::Highlighter) {
-        96
-    } else {
-        255
-    };
-    match color {
-        PenColor::Black => (25, 25, 25, alpha),
-        PenColor::Grey | PenColor::GreyOverlap => (112, 112, 112, alpha),
-        PenColor::White => (251, 251, 249, alpha),
-        PenColor::Yellow => (245, 209, 66, alpha),
-        PenColor::Green => (83, 157, 94, alpha),
-        PenColor::Pink => (225, 110, 160, alpha),
-        PenColor::Blue => (54, 111, 190, alpha),
-        PenColor::Red => (198, 61, 55, alpha),
-    }
 }
 
 fn apply_crop(image: DynamicImage, crop: Option<Crop>) -> Result<DynamicImage> {
