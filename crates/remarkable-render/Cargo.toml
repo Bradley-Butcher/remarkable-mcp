@@ -1,11 +1,11 @@
 [package]
 name = "remarkable-render"
-version = "0.1.2"
-edition = "2024"
-rust-version = "1.88"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 description = "Variable-width ink renderer for reMarkable scene files"
-license = "MIT"
-repository = "https://github.com/Bradley-Butcher/remarkable-mcp"
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 remarkable_lines = "0.1.3"

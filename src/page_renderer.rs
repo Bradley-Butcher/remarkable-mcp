@@ -1,3 +1,5 @@
+//! Page composition for source documents, templates, and reMarkable ink.
+
 use std::sync::Arc;
 
 use image::{DynamicImage, GenericImageView, ImageBuffer, Rgba, imageops::FilterType};

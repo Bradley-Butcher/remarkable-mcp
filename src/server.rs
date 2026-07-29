@@ -20,7 +20,7 @@ use crate::{
         MAX_SEARCH_LIMIT, MkdirInput, MoveInput, ReadInput, RecentInput, RenameInput, SearchInput,
         UploadInput,
     },
-    render::PageRenderer,
+    page_renderer::PageRenderer,
 };
 
 #[derive(Clone)]

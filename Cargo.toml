@@ -1,15 +1,22 @@
 [package]
 name = "remarkable-mcp"
-version = "0.1.2"
-edition = "2024"
-rust-version = "1.88"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 description = "A focused, cloud-only MCP server for reMarkable"
-license = "MIT"
-repository = "https://github.com/Bradley-Butcher/remarkable-mcp"
+license.workspace = true
+repository.workspace = true
 
 [workspace]
 members = [".", "crates/remarkable-render"]
 resolver = "2"
+
+[workspace.package]
+version = "0.1.2"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT"
+repository = "https://github.com/Bradley-Butcher/remarkable-mcp"
 
 [dependencies]
 base64 = "0.22"
